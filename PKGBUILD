@@ -53,7 +53,9 @@ package() {
     sudo cp -rv $pkgname-$pkgver-$arch/usr/share/falco/* /usr/share/falco
 
     echo "Intalling Binary [$arch]..."
+    # AUR Informs us that packages should NEVER be installed to /usr/local
     sudo cp -rv $pkgname-$pkgver-$arch/usr/bin/* /usr/bin
+
     echo "Installing Kernel Module..."
     cd $pkgname-$pkgver-$arch/usr/src/falco*
     sudo make install
