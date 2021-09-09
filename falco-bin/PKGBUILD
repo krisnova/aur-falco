@@ -1,17 +1,13 @@
 # Maintainer: Kris Nóva <kris@nivenly.com>
 
-pkgname=falco-bin
+pkgbase=falco-bin
+pkgname=(falco-bin falco-bin-dkms)
 pkgver=0.29.1
 pkgrel=1
 pkgdesc="Falco Runtime Security"
 arch=(x86_64)
 url="https://falco.org/"
 license=(Apache)
-depends=(dkms linux-headers)
-makedepends=()
-provides=(falco)
-conflicts=(falco)
-backup=()
 source_x86_64=("https://download.falco.org/packages/bin/${arch}/falco-${pkgver}-x86_64.tar.gz")
 sha256sums_x86_64=('60a7189f7d1c583b45966ea50af98ef3c3126aab52437ed1f67ef3d351034b90')
 
@@ -26,7 +22,9 @@ sha256sums_x86_64=('60a7189f7d1c583b45966ea50af98ef3c3126aab52437ed1f67ef3d35103
 
 _commit=17f5df52a7d9ed6bb12d3b1768460def8439936d
 
-package() {
+package_falco-bin() {
+  provides=(falco)
+  conflicts=(falco)
     install -d "${pkgdir}/etc/falco"
     cp -rv falco-${pkgver}-${arch}/etc/falco/* "${pkgdir}/etc/falco"
 
@@ -35,7 +33,12 @@ package() {
 
     install -d "${pkgdir}/usr/bin"
     cp -rv falco-${pkgver}-${arch}/usr/bin/* "${pkgdir}/usr/bin"
+}
 
+package_falco-bin-dkms() {
+  depends=(dkms linux-headers)
+  provides=(falco-dkms)
+  conflicts=(falco-dkms)
     install -d "${pkgdir}/usr/src/falco-${pkgver}"
     cp -rv falco-${pkgver}-${arch}/usr/src/falco-${_commit}/* "${pkgdir}/usr/src/falco-${pkgver}"
 }
