@@ -1,62 +1,41 @@
 # Maintainer: Kris Nóva <kris@nivenly.com>
-pkgname="falco"
-pkgver="0.29.1"
+
+pkgname=falco-bin
+pkgver=0.29.1
 pkgrel=1
 pkgdesc="Falco Runtime Security"
-arch=("x86_64")
-url="https://falcosecurity.org"
-license=("Apache2")
-groups=()
-depends=("linux-headers")
+arch=(x86_64)
+url="https://falco.org/"
+license=(Apache)
+depends=(dkms linux-headers)
 makedepends=()
-checkdepends=()
-optdepends=()
-provides=()
-conflicts=()
-replaces=()
+provides=(falco)
+conflicts=(falco)
 backup=()
-options=()
-install=
-changelog=
+source_x86_64=("https://download.falco.org/packages/bin/${arch}/falco-${pkgver}-x86_64.tar.gz")
+sha256sums_x86_64=('60a7189f7d1c583b45966ea50af98ef3c3126aab52437ed1f67ef3d351034b90')
 
 # EXAMPLE URL: https://download.falco.org/packages/bin/x86_64/falco-0.29.1-x86_64.tar.gz
-source=("https://download.falco.org/packages/bin/$arch/$pkgname-$pkgver-$arch.tar.gz")
-
 # Falco 0.29.1 SHA256
 # Note: This can be found by running "makepkg -g" in this directory.
 #       The AUR documentation suggests "makepkg -g >> PKGBUILD"
-sha256sums=('60a7189f7d1c583b45966ea50af98ef3c3126aab52437ed1f67ef3d351034b90')
-
+#       makepkg -g is deprecated, use updpkgsums
 # Kris Nóva PGP Key
-validpgpkeys=('F5F9B56417B7F2CAC1DEC2E372BB115B4DDD8252')
+#validpgpkeys=('F5F9B56417B7F2CAC1DEC2E372BB115B4DDD8252')
+# package signature is missing
 
-prepare() {
-    echo "Preparing Falco Build..."
-    echo "Falco Version: $pkgver"
-}
-
-build() {
-    echo "Compiling Kernel Module..."
-    cd $pkgname-$pkgver-$arch/usr/src/falco*
-    make
-}
-
-check() {
-    echo "check()"
-}
+_commit=17f5df52a7d9ed6bb12d3b1768460def8439936d
 
 package() {
-    echo "Installing Default Configuration..."
-    sudo mkdir -p /etc/falco
-    sudo cp -rv $pkgname-$pkgver-$arch/etc/falco/* /etc/falco
-    sudo mkdir -p /usr/share/falco
-    sudo cp -rv $pkgname-$pkgver-$arch/usr/share/falco/* /usr/share/falco
+    install -d "${pkgdir}/etc/falco"
+    cp -rv falco-${pkgver}-${arch}/etc/falco/* "${pkgdir}/etc/falco"
 
-    echo "Intalling Binary [$arch]..."
-    # AUR Informs us that packages should NEVER be installed to /usr/local
-    sudo cp -rv $pkgname-$pkgver-$arch/usr/bin/* /usr/bin
+    install -d "${pkgdir}/usr/share/falco"
+    cp -rv falco-${pkgver}-${arch}/usr/share/falco/* "${pkgdir}"/usr/share/falco
 
-    echo "Installing Kernel Module..."
-    cd $pkgname-$pkgver-$arch/usr/src/falco*
-    sudo make install
+    install -d "${pkgdir}/usr/bin"
+    cp -rv falco-${pkgver}-${arch}/usr/bin/* "${pkgdir}/usr/bin"
+
+    install -d "${pkgdir}/usr/src/falco-${pkgver}"
+    cp -rv falco-${pkgver}-${arch}/usr/src/falco-${_commit}/* "${pkgdir}/usr/src/falco-${pkgver}"
 }
