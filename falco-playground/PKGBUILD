@@ -1,0 +1,102 @@
+# Maintainer: Kris Nóva <kris@nivenly.com>
+
+pkgbase=falco
+pkgname=(falco falco-dkms)
+pkgver=0.30.0
+pkgrel=1
+pkgdesc="Cloud native runtime security"
+arch=(x86_64)
+url="https://falco.org/"
+license=(Apache)
+makedepends=(cmake git c-ares jq grpc yaml-cpp cppcheck libb64 jsoncpp tbb gtest)
+checkdepends=()
+optdepends=()
+backup=()
+options=()
+_falcosecurity=3aa7a83bf7b9e6229a3824e3fd1f4452d1e95cb4
+_b64=v1.2.1
+_catch2=v2.12.1
+_civetweb=v1.11
+_fakeit=2.0.5
+_libyaml=0.2.5
+_LuaJIT=1d8b747c161db457e032a023ebbff511f5de5ec2  #see luajit-prefix/tmp/luajit-gitclone.cmake checkout
+_lpeg=1.0.2
+_lyaml=release-v6.0
+_njson=v3.3.0
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/falcosecurity/falco/archive/refs/tags/${pkgver}.tar.gz"
+        "https://github.com/falcosecurity/libs/archive/${_falcosecurity}.tar.gz"
+        "b64-${_b64}.tar.gz::https://github.com/libb64/libb64/archive/${_b64}.tar.gz"
+        "catch2-${_catch2}.tar.gz::https://github.com/catchorg/catch2/archive/${_catch2}.tar.gz"
+        "civetweb-${_civetweb}.tar.gz::https://github.com/civetweb/civetweb/archive/${_civetweb}.tar.gz"
+        "fakeit-${_fakeit}.tar.gz::https://github.com/eranpeer/fakeit/archive/${_fakeit}.tar.gz"
+        "https://github.com/yaml/libyaml/releases/download/${_libyaml}/yaml-${_libyaml}.tar.gz"
+        "git+https://github.com/LuaJIT/LuaJIT.git#commit=${_LuaJIT}"
+        "http://www.inf.puc-rio.br/~roberto/lpeg/lpeg-${_lpeg}.tar.gz"
+        "lyaml-${_lyaml}.tar.gz::https://github.com/gvvaughan/lyaml/archive/${_lyaml}.tar.gz"
+        "njson-${_njson}.tar.gz::https://github.com/nlohmann/json/archive/${_njson}.tar.gz")
+sha256sums=('9d90a86752a700dad2d1ea888b2cd33cdc808621faa2b6300bb0463d404744fb'
+            '1edb535b3778fcfb46bbeeda891f176a1bd591bebd7b89c27f04837e55a52beb'
+            'd620e7caf3ed5f9c28d727fa799918ad3ef69c80975905646bb549a6019cdcbd'
+            'e5635c082282ea518a8dd7ee89796c8026af8ea9068cd7402fb1615deacd91c3'
+            'de7d5e7a2d9551d325898c71e41d437d5f7b51e754b242af897f7be96e713a42'
+            '298539c773baca6ecbc28914306bba19d1008e098f8adc3ad3bb00e993ecdf15'
+            'c642ae9b75fee120b2d96c712538bd2cf283228d2337df2cf2988e3c02678ef4'
+            'SKIP'
+            '48d66576051b6c78388faad09b70493093264588fcd0f258ddaab1cdd4a15ffe'
+            '9d7cf74d776999ff6f758c569d5202ff5da1f303c6f4229d3b41f71cd3a3e7a7'
+            '2fd1d207b4669a7843296c41d3b6ac5b23d00dec48dba507ba051d14564aa801')
+
+# Kris Nóva PGP Key
+#validpgpkeys=('F5F9B56417B7F2CAC1DEC2E372BB115B4DDD8252') # packages are not signed yet
+
+prepare() {
+  cd "${pkgname}-${pkgver}"
+  [[ -d build ]] || mkdir build
+
+  install -D ../${_falcosecurity}.tar.gz -t build/falcosecurity-libs-repo/falcosecurity-libs-prefix/src
+  install -D ../b64-${_b64}.tar.gz          build/b64-prefix/src/${_b64}.tar.gz
+  install -D ../catch2-${_catch2}.tar.gz    build/catch2-prefix/src/${_catch2}.tar.gz.tar.gz
+  install -D ../civetweb-${_civetweb}.tar.gz build/civetweb-prefix/src/${_civetweb}.tar.gz
+  install -D ../fakeit-${_fakeit}.tar.gz    build/fakeit-prefix/src/${_fakeit}.tar.gz
+  install -D ../yaml-${_libyaml}.tar.gz     build/libyaml-prefix/src/yaml-${_libyaml}.tar.gz
+  install -d build/luajit-prefix/src/luajit
+  cp -r ../LuaJIT/* build/luajit-prefix/src/luajit
+  install -D ../lpeg-${_lpeg}.tar.gz        build/lpeg-prefix/src/lpeg-${_lpeg}.tar.gz
+  install -D ../lyaml-${_lyaml}.tar.gz      build/lyaml-prefix/src/${_lyaml}.tar.gz
+  install -D ../njson-${_njson}.tar.gz      build/njson-prefix/src/${_njson}.tar.gz
+}
+
+build() {
+  cd "${pkgname}-${pkgver}/build"
+  cmake .. \
+    -DCMAKE_BUILD_TYPE=None \
+    -DUSE_BUNDLED_B64:BOOL=ON \
+    -DUSE_BUNDLED_JSONCPP:BOOL=OFF \
+    -DUSE_BUNDLED_TBB:BOOL=OFF \
+    -DCREATE_TEST_TARGETS:BOOL=OFF \
+    -DCMAKE_INSTALL_PREFIX=/usr
+
+  make
+}
+
+check() {
+  cd "${pkgname}-${pkgver}/build"
+  make -k check
+}
+
+package_falco() {
+  install -d "${pkgdir}/etc/falco"
+  cp -rv falco-${pkgver}-${arch}/etc/falco/* "${pkgdir}/etc/falco"
+
+  install -d "${pkgdir}/usr/share/falco"
+  cp -rv falco-${pkgver}/usr/share/falco/* "${pkgdir}"/usr/share/falco
+
+  make DESTDIR="${pkgdir}" install
+}
+
+package_falco-dkms() {
+  depends=(dkms linux-headers)
+
+  install -d "${pkgdir}/usr/src/falco-${pkgver}"
+  cp -rv falco-${pkgver}-${arch}/usr/src/falco-${_falcosecurity}/* "${pkgdir}/usr/src/falco-${pkgver}"
+}
