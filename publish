@@ -1,0 +1,45 @@
+# Copyright © 2021 Kris Nóva <kris@nivenly.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http:#www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+
+function push() {
+    # Argument 1 is the folder to publish
+    echo Publishing $1...
+    echo Cleaning...
+    rm -rvf aur/*
+    rm -rvf aur/.SRCINFO
+    echo Pulling from AUR...
+    rm -rvf aur/.git
+
+    # ->
+    cd aur
+    git init
+    git remote add $1 ssh://aur@aur.archlinux.org/$1.git
+    git pull $1 master --rebase
+    cp -v ../$1/* .
+    makepkg --printsrcinfo > .SRCINFO
+    git add .
+    git commit -m "Auto pushing from github.com/kris-nova/aur-falco"
+    git push $1 master
+    # <-
+    cd ..
+
+}
+
+
+push falco
+push falco-bin
+push falco-git
+#push falco-playground
